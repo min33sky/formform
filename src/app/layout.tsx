@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import AppHeader from '@/components/AppHeader';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import ClientProvider from '@/components/ClientProvider';
 
 export const metadata: Metadata = {
   title: '폼!',
@@ -21,8 +22,10 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AppHeader />
-          {children}
+          <ClientProvider>
+            <AppHeader />
+            {children}
+          </ClientProvider>
         </ThemeProvider>
       </body>
     </html>

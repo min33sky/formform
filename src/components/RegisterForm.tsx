@@ -19,7 +19,7 @@ import {
 import { RegisterType, registerSchema } from '@/libs/validators/registerSchema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -32,9 +32,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+import { useToast } from './ui/use-toast';
 
 export default function RegisterForm() {
   const [formStep, setFormStep] = useState(0);
+  const { toast } = useToast();
 
   const form = useForm<RegisterType>({
     resolver: zodResolver(registerSchema),
@@ -47,21 +49,39 @@ export default function RegisterForm() {
     },
   });
 
+  useEffect(() => {
+    if (Object.keys(form.formState.errors).length > 0) {
+      toast({
+        title: '회원가입 실패',
+        description: '회원가입에 실패했습니다.',
+        variant: 'destructive',
+      });
+    }
+  }, [form.formState.errors, toast]);
+
   const onSubmit = (data: RegisterType) => {
     console.log(data);
+
+    toast({
+      title: '회원가입 성공',
+      description: '회원가입에 성공했습니다.',
+      variant: 'default',
+    });
   };
 
   return (
     <Card className="w-full max-w-xl">
       <CardHeader>
-        <CardTitle>회원가입</CardTitle>
-        <CardDescription>아래 항목을 입력해주세요.</CardDescription>
+        <CardTitle className="pl-1">회원가입</CardTitle>
+        <CardDescription className="pl-1">
+          아래 항목을 입력해주세요.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="relative overflow-x-hidden"
+            className="relative overflow-x-hidden px-1 py-2"
           >
             <motion.div
               className={cn('space-y-10', {
@@ -100,7 +120,7 @@ export default function RegisterForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="dark:text-orange-300">
-                      Email
+                      이메일
                     </FormLabel>
                     <FormControl>
                       <Input placeholder="Enter your email..." {...field} />
@@ -116,7 +136,7 @@ export default function RegisterForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="dark:text-orange-300">
-                      Year of study
+                      년도 선택
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -142,8 +162,9 @@ export default function RegisterForm() {
                 )}
               />
             </motion.div>
+
             <motion.div
-              className={cn('space-y-3 absolute top-0 left-0 right-0', {
+              className={cn('space-y-10 absolute top-0 left-0 right-0', {
                 hidden: formStep == 0,
               })}
               // formStep == 0 -> translateX == 100%
@@ -207,8 +228,9 @@ export default function RegisterForm() {
                   hidden: formStep == 0,
                 })}
               >
-                Submit
+                확인
               </Button>
+
               <Button
                 type="button"
                 variant={'ghost'}
@@ -232,6 +254,7 @@ export default function RegisterForm() {
                 다음 단계
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
+
               <Button
                 type="button"
                 variant={'ghost'}
@@ -242,7 +265,7 @@ export default function RegisterForm() {
                   hidden: formStep == 0,
                 })}
               >
-                Go Back
+                이전 단계
               </Button>
             </div>
           </form>

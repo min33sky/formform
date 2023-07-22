@@ -2,9 +2,14 @@ import { z } from 'zod';
 
 export const registerSchema = z
   .object({
-    email: z.string().nonempty().email({
-      message: '이메일 형식이 올바르지 않습니다.',
-    }),
+    email: z
+      .string()
+      .nonempty({
+        message: '이메일을 입력해주세요.',
+      })
+      .email({
+        message: '이메일 형식이 올바르지 않습니다.',
+      }),
     name: z
       .string()
       .min(3, { message: '이름은 3글자 이상이어야 합니다.' })
