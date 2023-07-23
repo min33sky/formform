@@ -37,6 +37,7 @@ import { useToast } from './ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { RegisterType, registerSchema } from '@/lib/validators/registerSchema';
 import sleep from '@/lib/sleep';
+import { watch } from 'fs';
 
 export default function RegisterForm() {
   const [formStep, setFormStep] = useState(0);
@@ -56,15 +57,15 @@ export default function RegisterForm() {
 
   // console.log(form.formState.errors);
 
-  // useEffect(() => {
-  //   if (Object.keys(form.formState.errors).length > 0) {
-  //     toast({
-  //       title: '회원가입 실패',
-  //       description: '회원가입에 실패했습니다.',
-  //       variant: 'destructive',
-  //     });
-  //   }
-  // }, [form.formState.errors, toast]);
+  useEffect(() => {
+    if (Object.keys(form.formState.errors).length > 0) {
+      toast({
+        title: '회원가입 실패',
+        description: '회원가입에 실패했습니다.',
+        variant: 'destructive',
+      });
+    }
+  }, [form.formState.errors, toast]);
 
   const onNextStep = useCallback(() => {
     // validation
@@ -81,6 +82,24 @@ export default function RegisterForm() {
 
     setFormStep(1);
   }, [form]);
+
+  const onKeyUp = useCallback(
+    (e: React.KeyboardEvent<HTMLFormElement>) => {
+      if (e.key === 'Enter') {
+        if (form.watch('password') !== form.watch('passwordCheck')) {
+          console.log('비밀번호가 일치하지 않습니다.');
+          form.setError('passwordCheck', {
+            message: '비밀번호가 일치하지 않습니다.',
+          });
+        } else {
+          onNextStep();
+        }
+      } else if (Object.keys(form.formState.errors).length > 0) {
+        form.trigger(['email', 'name', 'password', 'passwordCheck']);
+      }
+    },
+    [form, onNextStep],
+  );
 
   const onSubmit = async (data: RegisterType) => {
     console.log(data);
@@ -120,11 +139,7 @@ export default function RegisterForm() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            onKeyUp={(e) => {
-              if (e.key === 'Enter') {
-                onNextStep();
-              }
-            }}
+            onKeyUp={onKeyUp}
             className="relative overflow-x-hidden "
           >
             <motion.div
