@@ -28,7 +28,9 @@ import { Input } from './ui/input';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from './ui/select';
@@ -45,11 +47,10 @@ export default function RegisterForm() {
       password: '',
       passwordCheck: '',
       name: '',
-      year: '',
     },
   });
 
-  console.log(form.formState.errors);
+  // console.log(form.formState.errors);
 
   // useEffect(() => {
   //   if (Object.keys(form.formState.errors).length > 0) {
@@ -228,22 +229,25 @@ export default function RegisterForm() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a verified email to display" />
+                          <SelectValue placeholder="년도를 선택해주세요." />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {Array(10)
-                          .fill(2023)
-                          .map((year, idx) => {
-                            return (
-                              <SelectItem
-                                value={(year - 10 + idx).toString()}
-                                key={idx}
-                              >
-                                Year {year - 10 + idx}
-                              </SelectItem>
-                            );
-                          })}
+                      <SelectContent className="max-h-48">
+                        <SelectGroup>
+                          <SelectLabel>년도</SelectLabel>
+                          {Array(100)
+                            .fill(2023)
+                            .map((year, idx) => {
+                              return (
+                                <SelectItem
+                                  value={(year - 10 + idx).toString()}
+                                  key={idx}
+                                >
+                                  {year - 10 + idx}년
+                                </SelectItem>
+                              );
+                            })}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                     <FormMessage className="dark:text-orange-300" />
