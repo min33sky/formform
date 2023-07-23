@@ -16,7 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { RegisterType, registerSchema } from '@/libs/validators/registerSchema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
@@ -35,9 +34,14 @@ import {
   SelectValue,
 } from './ui/select';
 import { useToast } from './ui/use-toast';
+import { useRouter } from 'next/navigation';
+import { RegisterType, registerSchema } from '@/lib/validators/registerSchema';
+import sleep from '@/lib/sleep';
 
 export default function RegisterForm() {
   const [formStep, setFormStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<RegisterType>({
@@ -78,14 +82,30 @@ export default function RegisterForm() {
     setFormStep(1);
   }, [form]);
 
-  const onSubmit = (data: RegisterType) => {
+  const onSubmit = async (data: RegisterType) => {
     console.log(data);
 
-    toast({
-      title: '회원가입 성공',
-      description: '회원가입에 성공했습니다.',
-      variant: 'default',
-    });
+    try {
+      setIsLoading(true);
+
+      await sleep(3000);
+
+      toast({
+        title: '회원가입 성공',
+        description: '회원가입에 성공했습니다.',
+        variant: 'default',
+      });
+
+      router.replace('/success');
+    } catch (error) {
+      toast({
+        title: '회원가입 실패',
+        description: '회원가입에 실패했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -286,6 +306,8 @@ export default function RegisterForm() {
               {formStep == 1 && (
                 <Button
                   type="submit"
+                  isLoading={isLoading}
+                  disabled={isLoading}
                   // className={cn({
                   //   hidden: formStep == 0,
                   // })}
