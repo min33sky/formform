@@ -14,7 +14,7 @@ export const registerSchema = z
       .string()
       .min(3, { message: '이름은 3글자 이상이어야 합니다.' })
       .max(10, { message: '이름은 10글자 이하여야 합니다.' }),
-    year: z.string().min(2).max(10),
+    year: z.string().nonempty('태어난 년도를 입력해주세요.'),
     password: z
       .string()
       .nonempty('비밀번호를 입력해주세요.')

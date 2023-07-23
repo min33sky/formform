@@ -19,8 +19,8 @@ import {
 import { RegisterType, registerSchema } from '@/libs/validators/registerSchema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -49,15 +49,33 @@ export default function RegisterForm() {
     },
   });
 
-  useEffect(() => {
-    if (Object.keys(form.formState.errors).length > 0) {
-      toast({
-        title: '회원가입 실패',
-        description: '회원가입에 실패했습니다.',
-        variant: 'destructive',
-      });
-    }
-  }, [form.formState.errors, toast]);
+  console.log(form.formState.errors);
+
+  // useEffect(() => {
+  //   if (Object.keys(form.formState.errors).length > 0) {
+  //     toast({
+  //       title: '회원가입 실패',
+  //       description: '회원가입에 실패했습니다.',
+  //       variant: 'destructive',
+  //     });
+  //   }
+  // }, [form.formState.errors, toast]);
+
+  const onNextStep = useCallback(() => {
+    // validation
+    form.trigger(['email', 'name', 'password', 'passwordCheck']);
+    const emailState = form.getFieldState('email');
+    const nameState = form.getFieldState('name');
+    const passwordState = form.getFieldState('password');
+    const passwordCheckState = form.getFieldState('passwordCheck');
+
+    if (!emailState.isDirty || emailState.invalid) return;
+    if (!nameState.isDirty || nameState.invalid) return;
+    if (!passwordState.isDirty || passwordState.invalid) return;
+    if (!passwordCheckState.isDirty || passwordCheckState.invalid) return;
+
+    setFormStep(1);
+  }, [form]);
 
   const onSubmit = (data: RegisterType) => {
     console.log(data);
@@ -70,7 +88,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-xl">
+    <Card className="custom-scrollbar w-full mt-24 mb-10 max-w-xl overflow-y-auto dark:custom-scrollbar-dark">
       <CardHeader>
         <CardTitle className="pl-1">회원가입</CardTitle>
         <CardDescription className="pl-1">
@@ -81,10 +99,15 @@ export default function RegisterForm() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="relative overflow-x-hidden px-1 py-2"
+            onKeyUp={(e) => {
+              if (e.key === 'Enter') {
+                onNextStep();
+              }
+            }}
+            className="relative overflow-x-hidden "
           >
             <motion.div
-              className={cn('space-y-10', {
+              className={cn('space-y-2 px-1', {
                 // hidden: formStep == 1,
               })}
               // formStep == 0 -> translateX == 0
@@ -104,7 +127,10 @@ export default function RegisterForm() {
                   <FormItem>
                     <FormLabel className="dark:text-orange-300">이름</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your name..." {...field} />
+                      <Input
+                        placeholder="이름은 3자 ~ 10자로 입력하세요."
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription>
                       활동할 때 사용 할 이름입니다.
@@ -123,62 +149,12 @@ export default function RegisterForm() {
                       이메일
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your email..." {...field} />
+                      <Input placeholder="예) user@gmail.com" {...field} />
                     </FormControl>
                     <FormMessage className="dark:text-orange-300" />
                   </FormItem>
                 )}
               />
-              {/* year */}
-              <FormField
-                control={form.control}
-                name="year"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="dark:text-orange-300">
-                      년도 선택
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a verified email to display" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {[10, 11, 12, 13].map((year) => {
-                          return (
-                            <SelectItem value={year.toString()} key={year}>
-                              Year {year}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="dark:text-orange-300" />
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div
-              className={cn('space-y-10 absolute top-0 left-0 right-0', {
-                hidden: formStep == 0,
-              })}
-              // formStep == 0 -> translateX == 100%
-              // formStep == 1 -> translateX == 0
-              animate={{
-                translateX: `${100 - formStep * 100}%`,
-              }}
-              style={{
-                translateX: `${100 - formStep * 100}%`,
-              }}
-              transition={{
-                ease: 'easeInOut',
-              }}
-            >
               {/* password */}
               <FormField
                 control={form.control}
@@ -190,7 +166,7 @@ export default function RegisterForm() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your password..."
+                        placeholder="소문자, 숫자, 특수문자를 포함한 8자 ~ 15자로 입력하세요."
                         {...field}
                         type="password"
                       />
@@ -210,7 +186,7 @@ export default function RegisterForm() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Please confirm your password..."
+                        placeholder="비밀번호를 다시 입력해주세요..."
                         {...field}
                         type="password"
                       />
@@ -221,43 +197,65 @@ export default function RegisterForm() {
               />
             </motion.div>
 
-            <div className="flex mt-6 gap-2">
-              <Button
-                type="submit"
-                className={cn({
-                  hidden: formStep == 0,
-                })}
-              >
-                확인
-              </Button>
+            <motion.div
+              className={cn('space-y-2 absolute top-0 left-0 right-0 p-1', {
+                hidden: formStep == 0,
+              })}
+              // formStep == 0 -> translateX == 100%
+              // formStep == 1 -> translateX == 0
+              animate={{
+                translateX: `${100 - formStep * 100}%`,
+              }}
+              style={{
+                translateX: `${100 - formStep * 100}%`,
+              }}
+              transition={{
+                ease: 'easeInOut',
+              }}
+            >
+              {/* year */}
+              <FormField
+                control={form.control}
+                name="year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="dark:text-orange-300">
+                      년도 선택
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a verified email to display" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Array(10)
+                          .fill(2023)
+                          .map((year, idx) => {
+                            return (
+                              <SelectItem
+                                value={(year - 10 + idx).toString()}
+                                key={idx}
+                              >
+                                Year {year - 10 + idx}
+                              </SelectItem>
+                            );
+                          })}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="dark:text-orange-300" />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
 
+            <footer className="flex justify-end mt-6 p-1 gap-2">
               <Button
                 type="button"
-                variant={'ghost'}
-                className={cn({
-                  hidden: formStep == 1,
-                })}
-                onClick={() => {
-                  // validation
-                  form.trigger(['email', 'name', 'year']);
-                  const emailState = form.getFieldState('email');
-                  const nameState = form.getFieldState('name');
-                  const yearState = form.getFieldState('year');
-
-                  if (!emailState.isDirty || emailState.invalid) return;
-                  if (!nameState.isDirty || nameState.invalid) return;
-                  if (!yearState.isDirty || yearState.invalid) return;
-
-                  setFormStep(1);
-                }}
-              >
-                다음 단계
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-
-              <Button
-                type="button"
-                variant={'ghost'}
+                variant={'secondary'}
                 onClick={() => {
                   setFormStep(0);
                 }}
@@ -265,9 +263,41 @@ export default function RegisterForm() {
                   hidden: formStep == 0,
                 })}
               >
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 이전 단계
               </Button>
-            </div>
+
+              <Button
+                type="button"
+                variant={'default'}
+                className={cn({
+                  hidden: formStep == 1,
+                })}
+                onClick={onNextStep}
+              >
+                다음 단계
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+
+              {formStep == 1 && (
+                <Button
+                  type="submit"
+                  // className={cn({
+                  //   hidden: formStep == 0,
+                  // })}
+                >
+                  확인
+                </Button>
+              )}
+              {/* <Button
+                type="submit"
+                className={cn({
+                  hidden: formStep == 0,
+                })}
+              >
+                확인
+              </Button> */}
+            </footer>
           </form>
         </Form>
       </CardContent>
