@@ -37,7 +37,6 @@ import { useToast } from './ui/use-toast';
 import { useRouter } from 'next/navigation';
 import { RegisterType, registerSchema } from '@/lib/validators/registerSchema';
 import sleep from '@/lib/sleep';
-import { watch } from 'fs';
 
 export default function RegisterForm() {
   const [formStep, setFormStep] = useState(0);
@@ -70,6 +69,7 @@ export default function RegisterForm() {
   const onNextStep = useCallback(() => {
     // validation
     form.trigger(['email', 'name', 'password', 'passwordCheck']);
+
     const emailState = form.getFieldState('email');
     const nameState = form.getFieldState('name');
     const passwordState = form.getFieldState('password');
@@ -95,11 +95,28 @@ export default function RegisterForm() {
           onNextStep();
         }
       } else if (Object.keys(form.formState.errors).length > 0) {
-        form.trigger(['email', 'name', 'password', 'passwordCheck']);
+        form.trigger(['email', 'name', 'password']);
       }
     },
     [form, onNextStep],
   );
+
+  useEffect(() => {
+    if (Object.keys(form.formState.errors).length === 0) return;
+
+    const password = form.watch('password');
+    const passwordCheck = form.watch('passwordCheck');
+
+    if (password !== passwordCheck) {
+      console.log('비밀번호가 일치하지 않습니다.');
+      form.setError('passwordCheck', {
+        message: '비밀번호가 일치하지 않습니다.',
+      });
+    } else {
+      form.clearErrors('passwordCheck');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.getValues('password'), form.getValues('passwordCheck')]);
 
   const onSubmit = async (data: RegisterType) => {
     console.log(data);
