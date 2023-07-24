@@ -20,7 +20,7 @@ export default function RootLayout({
       className="antialiased scroll-smooth"
       suppressHydrationWarning
     >
-      <body>
+      <body className="overflow-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ClientProvider>
             <AppHeader />

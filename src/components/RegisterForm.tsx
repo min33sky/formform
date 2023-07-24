@@ -54,72 +54,74 @@ export default function RegisterForm() {
     },
   });
 
-  // console.log(form.formState.errors);
+  /**
+   * Step1 -> Step2 이동 시 폼 검증 후 이동
+   */
+  const onNextStep = useCallback(async () => {
+    try {
+      // validation
+      const isValid = await form.trigger([
+        'email',
+        'name',
+        'password',
+        'passwordCheck',
+      ]);
 
-  useEffect(() => {
-    if (Object.keys(form.formState.errors).length > 0) {
-      toast({
+      if (!isValid) return;
+
+      /**
+       *? Next-Auth or Clerk과 같은 인증 라이브러리로 회원가입 요청 후
+       *? 회원가입 성공 시 setFormStep(1) 호출
+       */
+
+      // TODO: 회원가입 요청 API 호출
+
+      setFormStep(1);
+    } catch (error) {
+      return toast({
         title: '회원가입 실패',
         description: '회원가입에 실패했습니다.',
         variant: 'destructive',
       });
     }
-  }, [form.formState.errors, toast]);
+  }, [form, toast]);
 
-  const onNextStep = useCallback(() => {
-    // validation
-    form.trigger(['email', 'name', 'password', 'passwordCheck']);
-
-    const emailState = form.getFieldState('email');
-    const nameState = form.getFieldState('name');
-    const passwordState = form.getFieldState('password');
-    const passwordCheckState = form.getFieldState('passwordCheck');
-
-    if (!emailState.isDirty || emailState.invalid) return;
-    if (!nameState.isDirty || nameState.invalid) return;
-    if (!passwordState.isDirty || passwordState.invalid) return;
-    if (!passwordCheckState.isDirty || passwordCheckState.invalid) return;
-
-    setFormStep(1);
-  }, [form]);
-
+  /**
+   * 키보드 이벤트 핸들러
+   */
   const onKeyUp = useCallback(
-    (e: React.KeyboardEvent<HTMLFormElement>) => {
-      if (e.key === 'Enter') {
-        if (form.watch('password') !== form.watch('passwordCheck')) {
-          console.log('비밀번호가 일치하지 않습니다.');
-          form.setError('passwordCheck', {
-            message: '비밀번호가 일치하지 않습니다.',
-          });
-        } else {
-          onNextStep();
-        }
-      } else if (Object.keys(form.formState.errors).length > 0) {
-        form.trigger(['email', 'name', 'password']);
+    async (e: React.KeyboardEvent<HTMLFormElement>) => {
+      const errorCount = Object.keys(form.formState.errors).length;
+      const password = form.watch('password');
+      const passwordCheck = form.watch('passwordCheck');
+
+      if (password !== passwordCheck) {
+        console.log('비밀번호가 일치하지 않습니다.');
+        form.setError('passwordCheck', {
+          message: '비밀번호가 일치하지 않습니다.',
+        });
+        return;
+      } else {
+        form.clearErrors('passwordCheck');
       }
+
+      if (e.key === 'Enter') {
+        onNextStep();
+      } else if (errorCount > 0) {
+        await form.trigger(['email', 'name', 'password']);
+      }
+
+      console.log('에러수: ', errorCount);
     },
+
     [form, onNextStep],
   );
 
-  useEffect(() => {
-    if (Object.keys(form.formState.errors).length === 0) return;
-
-    const password = form.watch('password');
-    const passwordCheck = form.watch('passwordCheck');
-
-    if (password !== passwordCheck) {
-      console.log('비밀번호가 일치하지 않습니다.');
-      form.setError('passwordCheck', {
-        message: '비밀번호가 일치하지 않습니다.',
-      });
-    } else {
-      form.clearErrors('passwordCheck');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.getValues('password'), form.getValues('passwordCheck')]);
-
+  /**
+   * 최종 폼 제출 핸들러 (Step2)
+   */
   const onSubmit = async (data: RegisterType) => {
-    console.log(data);
+    // console.log(data);
 
     try {
       setIsLoading(true);
@@ -152,6 +154,7 @@ export default function RegisterForm() {
           아래 항목을 입력해주세요.
         </CardDescription>
       </CardHeader>
+
       <CardContent>
         <Form {...form}>
           <form
